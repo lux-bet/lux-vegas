@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Register</title>
+
+<style>
+/* ================= RESET ================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #2a0f14, #060305);
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  padding-top: 90px;
+}
+
+/* ================= TOP HEADER ================= */
+.top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, #1a070a, #0a0405);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+  z-index: 1000;
+}
+
+.lux-logo img {
+  width: 48px;
+  animation: floatLogo 3s ease-in-out infinite;
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 18px;
+  color: #ffd166;
+  letter-spacing: 1px;
+}
+
+.header-text span {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+@keyframes floatLogo {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+/* ================= MODAL ================= */
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: radial-gradient(circle at top, #1b070b, #090304);
+  border-radius: 26px;
+  padding: 24px;
+  box-shadow:
+    0 0 0 1px rgba(255, 215, 0, 0.18),
+    0 25px 45px rgba(0, 0, 0, 0.75);
+}
+
+/* ================= HEADER ================= */
+.header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #ffd166;
+  letter-spacing: 1px;
+}
+
+.step-text {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* ================= PROGRESS ================= */
+.progress {
+  margin: 16px 0 24px;
+  height: 6px;
+  background: #2a0f14;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress span {
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, #ffd166, #e09f3e);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.7);
+  transition: width 0.4s ease;
+}
+
+/* ================= STEPS ================= */
+.step {
+  display: none;
+  animation: stepFade 0.35s ease;
+}
+
+.step.active {
+  display: block;
+}
+
+@keyframes stepFade {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ================= FIELDS ================= */
+.field label {
+  font-size: 13px;
+  margin-bottom: 6px;
+  display: block;
+  opacity: 0.85;
+}
+
+.field input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 16px;
+  border: 1px solid #3a1518;
+  background: #090304;
+  color: #fff;
+  font-size: 15px;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #ffd166;
+  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.3);
+}
+
+.field.error input {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.error-msg {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ================= RULES ================= */
+.rules {
+  background: #120506;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 13px;
+  border: 1px solid #3a1518;
+}
+
+.rules span {
+  color: #677926;
+  margin-left: 6px;
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 18px;
+  border: none;
+  background: linear-gradient(135deg, #ffd166, #e09f3e);
+  color: #1a070a;
+  font-size: 16px;
+  margin-top: 18px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 0 22px rgba(255, 209, 102, 0.45);
+  transition: 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.btn.copy {
+  background: linear-gradient(135deg, #fff835, #c9b60a);
+  color: #04140b;
+  box-shadow: 0 0 18px rgba(198, 246, 67, 0.4);
+}
+
+/* ================= DEPOSIT METHOD ================= */
+.deposit-method {
+  border: 1px solid #3a1518;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  background: #090304;
+  transition: 0.2s ease;
+}
+
+.deposit-method.active {
+  border-color: #ffd166;
+  background: #120506;
+  box-shadow: 0 0 20px rgba(255, 209, 102, 0.4);
+}
+
+/* ================= QR / WALLET ================= */
+.qr-box img {
+  width: 190px;
+  border-radius: 12px;
+}
+
+.wallet {
+  background: #090304;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  word-break: break-all;
+  margin-bottom: 10px;
+  border: 1px solid #3a1518;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 480px) {
+  .modal {
+    border-radius: 22px;
+    padding: 20px;
+  }
+}
+
+
+</style>
+</head>
+
+<body>
+<div class="top-header">
+  <div class="lux-logo">
+    <img src="https://i.ibb.co/qYjBbkhZ/Chat-GPT-Image-29-2026-11-20-53.png" alt="LuxBet">
+  </div>
+
+  <div class="header-text">
+    <h1>Register</h1>
+    <span>Premium Casino Experience</span>
+  </div>
+</div>
+
+<div class="modal">
+
+  <div class="header">
+    <h2>سجّل</h2>
+    <div class="step-text">خطوة <b id="stepNum">1</b>/3</div>
+  </div>
+
+  <div class="progress">
+    <span id="progressBar"></span>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="field"><label>الاسم الأول *</label><input name="firstName"></div>
+    <div class="field"><label>اسم العائلة *</label><input name="lastName"></div>
+    <div class="field"><label>اسم المستخدم *</label><input name="username"></div>
+    <div class="field"><label>كلمة السر *</label><input type="password" name="password"></div>
+
+    <div class="rules">
+      <div><span>✔</span> أحرف كبيرة وصغيرة</div>
+      <div><span>✔</span> رقم واحد على الأقل</div>
+      <div><span>✔</span> 8 أحرف على الأقل</div>
+    </div>
+
+    <button class="btn one-click" onclick="oneClickRegister()">⚡ إنشاء بضغطة واحدة</button>
+    <button class="btn" onclick="validateStep1()">متابعة</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="deposit-method" onclick="selectDeposit('sham', event)"> شام كاش</div>
+    <div class="deposit-method" onclick="selectDeposit('usdt', event)"> USDT TRC20</div>
+
+    <div id="depositDetails" style="display:none">
+      <div class="qr-box">
+        <img id="qr">
+      </div>
+
+      <div id="autoAccountInfo" style="display:none; background:#481e19; border-radius:12px; padding:12px; margin-top:18px; font-size:13px;">
+        <h4 style="margin:0 0 8px;color:#dcc600;text-align:center;">معلومات الحساب التلقائي</h4>
+        <div>الاسم الأول: <span id="infoFirstName"></span></div>
+        <div>اسم العائلة: <span id="infoLastName"></span></div>
+        <div>اسم المستخدم: <span id="infoUsername"></span></div>
+        <div>كلمة السر: <span id="infoPassword"></span></div>
+      </div>
+
+      <div class="wallet" id="wallet"></div>
+      <button class="btn copy" onclick="copyWallet()">نسخ العنوان</button>
+
+      <div class="field">
+        <label>الرجاء ادخال المبلغ المحول</label>
+        <input type="number" id="depositAmount" placeholder="أدخل المبلغ">
+      </div>
+
+      <div class="field">
+        <label>الرجاء ادخال رقم عملية التحويل </label>
+        <input type="text" id="depositMemo" placeholder="Memo">
+      </div>
+
+      <button class="btn" onclick="validateDeposit()">متابعة</button>
+      <button class="btn" style="background:#e97713;margin-top:12px;" onclick="goBack(1)"> رجوع</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <h3 style="text-align:center">⏳ بانتظار تأكيد التحويل</h3>
+    <p style="text-align:center;opacity:.8">سيتم التحقق تلقائيًا</p>
+
+    <div style="background:#481e19;border-radius:14px;padding:14px;margin-top:18px;font-size:14px;">
+      <h4 style="margin:0 0 10px;color:#dcc600;text-align:center;">💰 ملخص الإيداع</h4>
+      <div>طريقة الدفع: <b id="summaryMethod"></b></div>
+      <div>المبلغ: <b id="summaryAmount"></b></div>
+      <div>Memo: <b id="summaryMemo"></b></div>
+    </div>
+
+    <button class="btn" style="background:#e97713;margin-top:20px" onclick="goBack(2)">⬅ رجوع</button>
+  </div>
+
+</div>
+
+<script>
+const wallets = {
+  sham: { address: "9ee376588a883d01be5d2cd9c52d042f", qr: "https://i.ibb.co/FbY2v65S/photo-2026-01-31-07-59-45.png" },
+  usdt: { address: "TBESf1xVh8pDhur4Z9fMCKkFodacxB2cFJ", qr: "https://i.ibb.co/hxPW8z8R/photo-2026-01-30-14-57-10.jpg" }
+};
+
+
+let step = localStorage.step ? parseInt(localStorage.step) : 1;
+let method = localStorage.method || null;
+
+function showStep(s){
+  document.querySelectorAll(".step").forEach(e=>e.classList.remove("active"));
+  document.getElementById("step"+s).classList.add("active");
+  document.getElementById("stepNum").textContent = s;
+  document.getElementById("progressBar").style.width = (s*33)+"%";
+  // عرض autoAccountInfo عند STEP 2
+  if(document.getElementById("autoAccountInfo")) {
+    document.getElementById("autoAccountInfo").style.display = (s>=2 && localStorage.user) ? "block" : "none";
+  }
+}
+showStep(step);
+if(method) selectDeposit(method);
+
+function nextStep(){ step++; if(step>3) step=3; localStorage.step=step; showStep(step); }
+
+function selectDeposit(type,e){
+  method = type;
+  localStorage.method = type;
+  document.querySelectorAll(".deposit-method").forEach(el=>el.classList.remove("active"));
+  if(e) e.currentTarget.classList.add("active");
+  document.getElementById("depositDetails").style.display = "block";
+  document.getElementById("wallet").textContent = wallets[type].address;
+  document.getElementById("qr").src = wallets[type].qr;
+}
+
+function copyWallet(){
+  navigator.clipboard.writeText(document.getElementById("wallet").textContent);
+  alert("تم نسخ العنوان");
+}
+
+function goBack(targetStep){
+  step = targetStep;
+  localStorage.step = targetStep;
+  showStep(targetStep);
+}
+
+function oneClickRegister(){
+  const uid = Math.floor(Math.random()*900000)+100000;
+  const data = {
+    firstName:"User",
+    lastName:uid,
+    username:"player_"+uid,
+    password:"Aa"+uid+"!"
+  };
+  document.querySelector('[name="firstName"]').value=data.firstName;
+  document.querySelector('[name="lastName"]').value=data.lastName;
+  document.querySelector('[name="username"]').value=data.username;
+  document.querySelector('[name="password"]').value=data.password;
+  localStorage.user = JSON.stringify(data);
+  document.getElementById("infoFirstName").textContent = data.firstName;
+  document.getElementById("infoLastName").textContent = data.lastName;
+  document.getElementById("infoUsername").textContent = data.username;
+  document.getElementById("infoPassword").textContent = data.password;
+  document.getElementById("autoAccountInfo").style.display = "block";
+  step = 2;
+  localStorage.step = step;
+  showStep(step);
+}
+
+function validateStep1(){
+  let valid = true;
+  const fields = [
+    {name:"firstName", label:"الاسم الأول"},
+    {name:"lastName", label:"اسم العائلة"},
+    {name:"username", label:"اسم المستخدم"},
+    {name:"password", label:"كلمة السر"}
+  ];
+  document.querySelectorAll(".field").forEach(f=>{ f.classList.remove("error"); const msg=f.querySelector(".error-msg"); if(msg) msg.remove(); });
+  fields.forEach(f=>{
+    const input = document.querySelector(`[name="${f.name}"]`);
+    const wrapper = input.closest(".field");
+    if(!input.value.trim()){ showError(wrapper, `${f.label} مطلوب`); valid=false; }
+  });
+  const password = document.querySelector('[name="password"]').value;
+  if(password && password.length < 8){ showError(document.querySelector('[name="password"]').closest(".field"), "كلمة السر يجب أن تكون 8 أحرف على الأقل"); valid=false; }
+  if(!valid) return;
+  const userData = {
+    firstName: document.querySelector('[name="firstName"]').value,
+    lastName: document.querySelector('[name="lastName"]').value,
+    username: document.querySelector('[name="username"]').value,
+    password: document.querySelector('[name="password"]').value
+  };
+  localStorage.user = JSON.stringify(userData);
+  document.getElementById("infoFirstName").textContent = userData.firstName;
+  document.getElementById("infoLastName").textContent = userData.lastName;
+  document.getElementById("infoUsername").textContent = userData.username;
+  document.getElementById("infoPassword").textContent = userData.password;
+  document.getElementById("autoAccountInfo").style.display = "block";
+  step = 2;
+  localStorage.step = step;
+  showStep(step);
+}
+
+function showError(wrapper,message){
+  wrapper.classList.add("error");
+  const msg = document.createElement("div");
+  msg.className = "error-msg";
+  msg.textContent = message;
+  wrapper.appendChild(msg);
+}
+
+let depositAmountValue = 0;
+function validateDeposit(){
+  let valid = true;
+  const amountInput = document.getElementById("depositAmount");
+  const memoInput = document.getElementById("depositMemo");
+  [amountInput, memoInput].forEach(input=>{
+    const wrapper=input.closest(".field");
+    wrapper.classList.remove("error");
+    const msg=wrapper.querySelector(".error-msg");
+    if(msg) msg.remove();
+  });
+  if(!method){ alert("يرجى اختيار طريقة الإيداع"); return; }
+  if(!amountInput.value || Number(amountInput.value)<=0){ showDepositError(amountInput,"يرجى إدخال مبلغ صحيح"); valid=false; }
+  if(!memoInput.value.trim()){ showDepositError(memoInput,"حقل Memo مطلوب"); valid=false; }
+  if(!valid) return;
+  depositAmountValue = Number(amountInput.value);
+  localStorage.depositAmount = depositAmountValue;
+  localStorage.depositMemo = memoInput.value.trim();
+  document.getElementById("summaryMethod").textContent = method==="sham"?"شام كاش":"USDT TRC20";
+  document.getElementById("summaryAmount").textContent = depositAmountValue + " $";
+  document.getElementById("summaryMemo").textContent = memoInput.value.trim();
+  step = 3;
+  localStorage.step = step;
+  showStep(step);
+}
+
+function showDepositError(input,message){
+  const wrapper=input.closest(".field");
+  wrapper.classList.add("error");
+  const msg = document.createElement("div");
+  msg.className="error-msg";
+  msg.textContent = message;
+  wrapper.appendChild(msg);
+}
+</script>
+</body>
+</html>
