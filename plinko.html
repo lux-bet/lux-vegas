@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LuxBet Plinko</title>
+
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",Tahoma,sans-serif}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:radial-gradient(circle at top,#3a0b5e,#140018,#000);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#e9d5ff;
+}
+
+.game-wrapper{
+  width:100%;
+  max-width:420px;
+  padding:12px;
+}
+
+/* ===== HEADER ===== */
+.lux-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.lux-header img{
+  height:90px;
+}
+
+.balance{
+  font-weight:bold;
+  color:#e879f9;
+}
+
+/* ===== CANVAS ===== */
+canvas{
+  width:100%;
+  height:520px;
+  background:linear-gradient(180deg,#1a0826,#2b0b3f,#140018);
+  border-radius:22px;
+  box-shadow:0 0 40px rgba(192,38,211,.35);
+}
+
+/* ===== CONTROLS ===== */
+.controls{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+
+button{
+  padding:14px;
+  border-radius:18px;
+  border:none;
+  font-size:15px;
+  font-weight:bold;
+  cursor:pointer;
+  background:linear-gradient(135deg,#d946ef,#7c3aed);
+  color:#140018;
+  box-shadow:0 0 18px rgba(217,70,239,.6);
+}
+
+button.secondary{
+  background:#140018;
+  color:#d946ef;
+  border:1px solid #d946ef;
+}
+
+/* ===== RISK ===== */
+.risk{
+  display:flex;
+  gap:6px;
+}
+
+.risk button{
+  flex:1;
+  padding:10px;
+  font-size:14px;
+}
+
+.risk button.active{
+  background:#d946ef;
+  color:#140018;
+}
+input[type=range]{
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #d946ef 0%, #7c3aed 100%);
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #22c55e;
+  cursor: pointer;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+</style>
+</head>
+
+<body>
+<div class="game-wrapper">
+
+  <!-- HEADER -->
+  <div class="lux-header">
+    <img src="https://i.ibb.co/TxyJZVGq/plinko-logo.png">
+    <div class="balance">Balance: <span id="bal">100.00</span>$</div>
+  </div>
+
+  <!-- GAME -->
+  <canvas id="plinkoCanvas"></canvas>
+
+  <!-- CONTROLS -->
+ <div class="controls">
+
+  <!-- Risk Chips -->
+  <div class="risk">
+    <button data-risk="low" class="active">LOW</button>
+    <button data-risk="medium">MEDIUM</button>
+    <button data-risk="high">HIGH</button>
+  </div>
+
+  <!-- Bet Slider -->
+  <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+    <input type="range" id="betSlider" min="1" max="20" value="1" step="0.5" style="flex:1;">
+    <span id="betValue" style="min-width:40px;text-align:center;color:#e879f9;font-weight:bold;">1</span>$
+  </div>
+
+  <!-- Buttons -->
+  <button id="dropBtn">DROP BALL</button>
+  <button id="autoBtn" class="secondary">AUTO DROP: OFF</button>
+
+</div>
+
+
+<script>
+/* ===== CANVAS ===== */
+const canvas = document.getElementById("plinkoCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 400;
+canvas.height = 520;
+
+/* ===== GAME VARS ===== */
+let balance = 100;
+let bet = 1;
+let balls = [];
+let pegs = [];
+let particles = [];
+let autoDrop = false;
+let risk = "low";
+let winTexts = []; // لتخزين نصوص الأرباح
+
+const PEG_RADIUS = 4;
+const BALL_RADIUS = 7;
+const GRAVITY = 0.35;
+const bucketHeight = 40;
+
+/* ===== MULTIPLIERS ===== */
+const risks = {
+  low:    [0.5,1,1.2,1.5,2,1.5,1.2,1,0.5],
+  medium: [0,0.5,1.2,2,5,2,1.2,0.5,0],
+  high:   [0,0,0.5,2,10,2,0.5,0,0]
+};
+
+function getMultipliers(){
+  const arr = risks[risk];
+  const centerIndex = Math.floor(arr.length / 2);
+
+  return arr.map((v,i)=>{
+    let color;
+
+    // ✅ المربع الأوسط دائماً أخضر
+    if(i === centerIndex){
+      color = "#22c55e"; // green
+    }
+    else if(v === 0){
+      color = "#6b21a8"; // dark purple
+    }
+    else if(v < 1){
+      color = "#ef4444"; // red
+    }
+    else if(v < 2){
+      color = "#facc15"; // yellow
+    }
+    else{
+      color = "#a855f7"; // purple
+    }
+
+    return { value:v, color };
+  });
+}
+
+
+/* ===== PEGS ===== */
+function createPegs(){
+  pegs=[];
+  const rows=10, sx=32, sy=36;
+  for(let r=0;r<rows;r++){
+    const count=r+3;
+    const start=canvas.width/2-(count-1)*sx/2;
+    for(let i=0;i<count;i++){
+      pegs.push({x:start+i*sx,y:60+r*sy});
+    }
+  }
+}
+const betSlider = document.getElementById("betSlider");
+const betValue = document.getElementById("betValue");
+
+// عند تحريك السلايدر
+betSlider.oninput = () => {
+  bet = parseFloat(betSlider.value); // تحدد قيمة الرهان
+  betValue.textContent = bet.toFixed(2); // تحديث العرض بجانب السلايدر
+};
+
+/* ===== BALL ===== */
+function dropBall(){
+  if(balance < bet) return;
+  balance -= bet;
+  updateBalance();
+  balls.push({
+    x:canvas.width/2,
+    y:20,
+    vx:(Math.random()-.5)*2,
+    vy:0
+  });
+}
+
+/* ===== PARTICLES ===== */
+function spark(x,y){
+  for(let i=0;i<14;i++){
+    particles.push({
+      x,y,
+      vx:(Math.random()-.5)*4,
+      vy:(Math.random()-1)*4,
+      life:28
+    });
+  }
+}
+
+/* ===== UPDATE ===== */
+function update(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const multipliers=getMultipliers();
+  const bw=canvas.width/multipliers.length;
+
+  /* BUCKETS */
+  multipliers.forEach((b,i)=>{
+    ctx.fillStyle=b.color;
+    ctx.fillRect(i*bw,canvas.height-bucketHeight,bw,bucketHeight);
+    ctx.fillStyle="#000";
+    ctx.font="bold 13px Segoe UI";
+    ctx.textAlign="center";
+    ctx.fillText(b.value+"x",i*bw+bw/2,canvas.height-14);
+  });
+
+  /* PEGS */
+  pegs.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,PEG_RADIUS,0,Math.PI*2);
+    ctx.fillStyle="#f5d0fe";
+    ctx.fill();
+  });
+
+  /* BALLS */
+  balls.forEach((ball,idx)=>{
+    ball.vy+=GRAVITY;
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    pegs.forEach(p=>{
+      const dx=ball.x-p.x,dy=ball.y-p.y;
+      const d=Math.hypot(dx,dy);
+      if(d < BALL_RADIUS+PEG_RADIUS){
+        ball.vx += dx>0?0.6:-0.6;
+        ball.vy *= -0.35;
+      }
+    });
+
+  if(ball.y > canvas.height-bucketHeight-BALL_RADIUS){
+  const index = Math.floor(ball.x/bw);
+  const win = bet * (multipliers[index]?.value || 0);
+  balance += win;
+  updateBalance();
+  
+  spark(ball.x, canvas.height-bucketHeight);
+
+  // أضف نص الربح مع lifetime أطول (مثلاً 60 إطار ≈ ثانية واحدة)
+  winTexts.push({
+    text: "+"+win.toFixed(2)+"$",
+    x: ball.x,
+    y: canvas.height-bucketHeight-10,
+    life: 60 // عدد الإطارات التي سيبقى فيها النص
+  });
+
+  balls.splice(idx, 1);
+  return;
+}
+
+
+
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,BALL_RADIUS,0,Math.PI*2);
+    ctx.fillStyle="#e879f9";
+    ctx.shadowColor="#c026d3";
+    ctx.shadowBlur=12;
+    ctx.fill();
+    ctx.shadowBlur=0;
+  });
+
+  /* PARTICLES */
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.life--;
+    ctx.fillStyle="rgba(217,70,239,.9)";
+    ctx.fillRect(p.x,p.y,2,2);
+  });
+  particles=particles.filter(p=>p.life>0);
+
+  requestAnimationFrame(update);
+  winTexts.forEach((t, i) => {
+  // alpha حسب العمر لتأثير fade
+  const alpha = t.life / 60;
+    ctx.fillStyle = `rgba(34,197,94,${alpha})`;
+  ctx.font = "bold 16px Segoe UI";
+  ctx.textAlign = "center";
+  ctx.fillText(t.text, t.x, t.y);
+
+  t.y -= 0.5; // النص يرتفع تدريجياً
+  t.life--;    // يقل العمر
+});
+
+// إزالة النصوص التي انتهت
+winTexts = winTexts.filter(t => t.life > 0);
+
+}
+
+/* ===== UI ===== */
+function updateBalance(){
+  document.getElementById("bal").textContent=balance.toFixed(2);
+}
+
+/* ===== EVENTS ===== */
+document.getElementById("dropBtn").onclick=dropBall;
+
+document.getElementById("autoBtn").onclick=()=>{
+  autoDrop=!autoDrop;
+  document.getElementById("autoBtn").textContent=
+    "AUTO DROP: "+(autoDrop?"ON":"OFF");
+};
+
+setInterval(()=>{ if(autoDrop) dropBall(); },800);
+
+document.querySelectorAll(".risk button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll(".risk button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    risk=b.dataset.risk;
+  };
+});
+
+/* ===== INIT ===== */
+createPegs();
+update();
+updateBalance();
+</script>
+</body>
+</html>

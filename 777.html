@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Slot</title>
+
+<style>
+
+.win{
+  animation: glow 1s infinite alternate;
+}
+
+@keyframes glow{
+  from{box-shadow:0 0 10px gold;}
+  to{box-shadow:0 0 25px gold;}
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:space-between;
+}
+
+.bet-controls button{
+  padding:6px 12px;
+  font-size:14px;
+}
+
+
+
+
+
+body {
+  margin:0;
+  background: url('https://i.ibb.co/zwMnyZ6/Chat-GPT-Image-29-2026-09-00-17.png') no-repeat center center fixed;
+  background-size: cover; /* لتغطية كامل الشاشة */
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:Arial;
+  color:#fff;
+}
+
+
+/* ===== FRAME ===== */
+.slot-frame{
+  background:linear-gradient(180deg,#3b2a12,#140a02);
+  padding:16px;
+  border-radius:22px;
+  box-shadow:
+    0 0 25px rgba(255,215,0,.4),
+    inset 0 0 15px rgba(255,255,255,.1);
+}
+
+/* ===== MACHINE ===== */
+.slot-machine{
+  background:#1a0f3d;
+  border:3px solid gold;
+  border-radius:16px;
+  padding:12px;
+}
+
+/* ===== GRID ===== */
+.reels{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  width:90vw;
+  max-width:420px;
+  aspect-ratio:5/3;
+  overflow:hidden;
+}
+
+/* ===== REEL ===== */
+.reel{
+  background:#12092b;
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+}
+
+.symbols{
+  position:absolute;
+  top:0;
+  width:100%;
+}
+
+.symbol{
+  height:33.33%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.symbol img{
+  width:70%;
+}
+
+/* ===== CONTROLS ===== */
+.controls{
+  margin-top:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+button{
+  background:linear-gradient(180deg,#ffd86b,#c79a27);
+  border:none;
+  border-radius:12px;
+  padding:12px 24px;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 0 12px rgba(255,215,0,.6);
+}
+
+button:active{
+  transform:scale(.95);
+}
+
+.balance{
+  font-size:14px;
+}
+.bottom-controls{
+  margin-top:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-items:center;
+}
+
+.bet-controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.spin-controls{
+  display:flex;
+  gap:12px;
+}
+
+.spin-controls button{
+  min-width:120px;
+}
+
+button.disabled{
+  opacity:.5;
+  pointer-events:none;
+}
+
+#autoBtn.active{
+  background:linear-gradient(180deg,#00ffcc,#008866);
+  box-shadow:0 0 15px #00ffcc;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="slot-frame">
+  <div class="slot-machine">
+
+    <div class="reels" id="reels"></div>
+
+   <div class="controls bottom-controls">
+  
+  <div class="balance">
+    💰 <span id="balance">1000</span>
+  </div>
+
+  <div class="bet-controls">
+    <button onclick="changeBet(-10)">-</button>
+    <span>BET: <span id="bet">10</span></span>
+    <button onclick="changeBet(10)">+</button>
+    <button onclick="maxBet()">MAX</button>
+  </div>
+
+  <div class="spin-controls">
+    <button id="spinBtn" onclick="spin()">SPIN</button>
+    <button id="autoBtn" onclick="autoSpin()">AUTO</button>
+  </div>
+
+</div>
+
+
+</div>
+
+<audio id="spinSound" src="https://assets.mixkit.co/sfx/preview/mixkit-slot-machine-spin-1930.mp3"></audio>
+
+<script>
+/* ===== SYMBOLS ===== */
+const symbols = [
+ "https://i.ibb.co/R4BfL168/00098345678777486587687687.png",
+ "https://i.ibb.co/fdHY2RDV/8986987987987.png",
+ "https://i.ibb.co/XZtyrxSs/98532345678.png", // scatter
+ "https://i.ibb.co/Pzc1Ls0B/888473475347.png",    // wild
+ "https://i.ibb.co/Jwbkjz21/87665012345.png",
+ "https://i.ibb.co/Wv4DQqsf/000099881234567876.png"
+];
+
+
+const WILD = "wild.png";
+const SCATTER = "diamond.png";
+const spinBtn = document.getElementById("spinBtn");
+const autoBtn = document.getElementById("autoBtn");
+
+/* ===== PAYLINES ===== */
+const paylines = [
+ [5,6,7,8,9],        // وسط
+ [0,1,2,3,4],        // فوق
+ [10,11,12,13,14],   // تحت
+ [0,6,12,8,4],       // V
+ [10,6,2,8,14],      // Z
+ [0,6,12,13,14],     // ↘
+ [10,6,2,3,4]        // ↗
+];
+
+const reelsContainer = document.getElementById("reels");
+const balanceEl = document.getElementById("balance");
+const betEl = document.getElementById("bet");
+
+let balance = 1000;
+let bet = 10;
+let spinning = false;
+let auto = false;
+
+/* ===== CREATE REELS ===== */
+for(let i=0;i<5;i++){
+  const reel = document.createElement("div");
+  reel.className = "reel";
+
+  const sym = document.createElement("div");
+  sym.className = "symbols";
+
+  for(let j=0;j<20;j++){
+    const s = document.createElement("div");
+    s.className="symbol";
+    const img = document.createElement("img");
+    img.src = symbols[Math.floor(Math.random()*symbols.length)];
+    s.appendChild(img);
+    sym.appendChild(s);
+  }
+
+  reel.appendChild(sym);
+  reelsContainer.appendChild(reel);
+}
+
+/* ===== BET CONTROLS ===== */
+function changeBet(v){
+  bet = Math.max(10, bet + v);
+  betEl.textContent = bet;
+}
+
+function maxBet(){
+  bet = 100;
+  betEl.textContent = bet;
+}
+
+/* ===== AUTO SPIN ===== */
+function autoSpin(){
+  auto = !auto;
+  autoBtn.classList.toggle("active", auto);
+
+  if(auto && !spinning){
+    spin();
+  }
+}
+
+
+/* ===== SPIN ===== */
+function spin(){
+  if(spinning || balance < bet) return;
+
+  spinning = true;
+  spinBtn.classList.add("disabled");
+
+  balance -= bet;
+  balanceEl.textContent = balance;
+  clearGlow();
+
+  document.getElementById("spinSound").currentTime = 0;
+  document.getElementById("spinSound").play();
+
+
+  const reels = document.querySelectorAll(".symbols");
+  let done = 0;
+
+  reels.forEach((reel,i)=>{
+    // إعادة تعيين قبل كل سبن
+    reel.style.transition = "none";
+    reel.style.top = "0";
+
+    // إعادة توليد الرموز بشكل عشوائي لمنع نفاد الصور
+    Array.from(reel.children).forEach(s=>{
+      s.querySelector("img").src = symbols[Math.floor(Math.random()*symbols.length)];
+    });
+
+    setTimeout(()=>{
+      // تحديد مكان التوقف عشوائياً ضمن 0-9 (تظهر الرموز من الأسفل)
+      const stopIndex = Math.floor(Math.random()*10);
+      const stop = -stopIndex*33.33;
+      reel.style.transition = "top 1.4s cubic-bezier(.2,.8,.3,1)";
+      reel.style.top = stop + "%";
+
+      setTimeout(()=>{
+        done++;
+       if(done === 5){
+  checkWin();
+  spinning = false;
+  spinBtn.classList.remove("disabled");
+
+  if(auto && balance >= bet){
+    setTimeout(spin, 700);
+  } else {
+    auto = false;
+    autoBtn.classList.remove("active");
+  }
+}
+
+      }, 1500);
+    }, i*200);
+  });
+}
+
+/* ===== GET GRID ===== */
+function getGrid(){
+  const grid = [];
+  document.querySelectorAll(".symbols").forEach(r=>{
+    // الحصول على index بطريقة آمنة
+    const idx = Math.min(Math.abs(Math.round(parseFloat(r.style.top)/33.33)), r.children.length - 3);
+    for(let row=0; row<3; row++){
+      grid.push(r.children[idx + row].querySelector("img").src);
+    }
+  });
+  return grid;
+}
+
+/* ===== CHECK WINS ===== */
+function checkWin(){
+  const grid = getGrid();
+  let winAmount = 0;
+
+  paylines.forEach(line=>{
+    const lineSymbols = line.map(i=>grid[i]);
+    const base = lineSymbols.find(s=>!s.includes(WILD));
+
+    if(!base) return;
+
+    if(lineSymbols.every(s=>s===base || s.includes(WILD))){
+      winAmount += bet * 5;
+      glow(line);
+    }
+  });
+
+  // Scatter
+  const scatterCount = grid.filter(s=>s.includes(SCATTER)).length;
+  if(scatterCount >= 3){
+    winAmount += bet * 10;
+  }
+
+  if(winAmount > 0){
+    balance += winAmount;
+    balanceEl.textContent = balance;
+  }
+}
+
+/* ===== GLOW ===== */
+function glow(indices){
+  indices.forEach(i=>{
+    document.querySelectorAll(".symbol")[i].classList.add("win");
+  });
+}
+
+function clearGlow(){
+  document.querySelectorAll(".symbol").forEach(s=>s.classList.remove("win"));
+}
+</script>
+
+
+
+</body>
+</html>
